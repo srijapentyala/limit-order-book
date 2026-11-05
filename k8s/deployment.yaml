@@ -1,0 +1,53 @@
+# A single engine: the book lives in one process's memory, so it is not horizontally scalable.
+# Redis and Kafka are expected at the addresses below. Validated against the Kubernetes API
+# schema, but not applied to a live cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: limit-order-book
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: limit-order-book
+  template:
+    metadata:
+      labels:
+        app: limit-order-book
+    spec:
+      containers:
+        - name: engine
+          image: limit-order-book:local
+          args: ["--port", "9000", "--feed-port", "9001", "--redis", "redis:6379"]
+          ports:
+            - name: orders
+              containerPort: 9000
+            - name: feed
+              containerPort: 9001
+          readinessProbe:
+            tcpSocket:
+              port: orders
+          livenessProbe:
+            tcpSocket:
+              port: orders
+          resources:
+            requests:
+              cpu: "3"
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: limit-order-book
+spec:
+  selector:
+    app: limit-order-book
+  ports:
+    - name: orders
+      port: 9000
+      targetPort: orders
+    - name: feed
+      port: 9001
+      targetPort: feed

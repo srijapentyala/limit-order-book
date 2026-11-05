@@ -1,0 +1,4 @@
+{"label":"kafka-bridge","load_avg":11.46,"result":{"mode":"open_loop","target_rate":20000,"conns":1,"replies":200000,"trade_frames":95746,"rejects":32083,"seconds":10.0003,"msgs_per_sec":19999,"rtt_us":{"p50":405.875,"p95":2277.42,"p99":6788.25,"p999":22465.3,"max":30815.3},"failed":false}}
+{"engine":{"new":119936,"cancels":80064,"rejects":32083,"trades":47873,"feed_frames":191682,"redis_commands":0,"redis_dropped":0,"slow_client_drops":0,"malformed_clients":0}}
+{"bridge":{"frames": 191682, "trades": 47873, "gaps": 0}}
+{"messages_in_topic":47873}

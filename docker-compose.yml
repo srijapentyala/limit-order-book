@@ -1,0 +1,54 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 15
+
+  redpanda:
+    image: redpandadata/redpanda:v24.2.4
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 512M
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "info"]
+      interval: 3s
+      retries: 20
+
+  engine:
+    build: .
+    command: ["--port", "9000", "--feed-port", "9001", "--redis", "redis:6379"]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  kafka-bridge:
+    build: python
+    command: ["--feed", "engine:9001", "--bootstrap", "redpanda:9092", "--topic", "trades"]
+    restart: on-failure
+    depends_on:
+      engine:
+        condition: service_started
+      redpanda:
+        condition: service_healthy
